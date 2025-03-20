@@ -1,8 +1,72 @@
 import AddReviewModal from "./AddReviewModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function WellBeingReview() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const athleteId = 1;
+  const [reviews, setReviews] = useState([]);
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Tháng được tính từ 0
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  const reviewMapping = {
+    fatigue_level: {
+      5: "Nhiều năng lượng",
+      4: "Năng lượng",
+      3: "Bình thường",
+      2: "Mệt mỏi hơn bình thường",
+      1: "Luôn cảm thấy mệt mỏi"
+    },
+    sleeping_quality: {
+      5: "Rất tốt",
+      4: "Tốt",
+      3: "Khó vào giấc",
+      2: "Ngủ không sâu",
+      1: "Mất ngủ"
+    },
+    muscle_soreness: {
+      5: "Cảm giác tốt",
+      4: "Cảm giác ổn",
+      3: "Bình thường",
+      2: "Căng mỏi nhẹ",
+      1: "Rất căng mỏi (đau)"
+    },
+    stress_level: {
+      5: "Rất thư giãn",
+      4: "Thư giãn",
+      3: "Bình thường",
+      2: "Cảm giác hơi stress",
+      1: "Rất stress"
+    },
+    mental_state: {
+      5: "Rất phấn chấn",
+      4: "Cảm thấy ổn",
+      3: "Ít hứng thú tập luyện",
+      2: "Dễ khó chịu với mọi người",
+      1: "Rất khó chịu với mọi người"
+    }
+  };
+
+  //fetch review data của athlete
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/wellbeing/athlete?athlete_id=${athleteId}`);
+        const data = await response.json();
+        setReviews(data);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+      }
+    };
+
+    if (athleteId) {
+      fetchReviews();
+    }
+  }, [athleteId]);
 
   return (
     <>
@@ -105,96 +169,26 @@ export default function WellBeingReview() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b">
-                    <th
-                      scope="row"
-                      className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
-                    >
-                      18/03/2025
-                    </th>
-                    <td className="px-3 py-3">(5) Nhiều năng lượng</td>
-                    <td className="px-3 py-3">(4) Tốt</td>
-                    <td className="px-3 py-3">(4) Cảm giác ổn</td>
-                    <td className="px-3 py-3">(3) Bình thường</td>
-                    <td className="px-3 py-3">(4) Cảm thấy ổn</td>
-                    <td className="px-3 py-3">Cổ</td>
-                    <td className="px-3 py-3">7 giờ</td>
-                  </tr>
-                  <tr className="border-b">
-                    <th
-                      scope="row"
-                      className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
-                    >
-                      18/03/2025
-                    </th>
-                    <td className="px-3 py-3">(5) Nhiều năng lượng</td>
-                    <td className="px-3 py-3">(4) Tốt</td>
-                    <td className="px-3 py-3">(4) Cảm giác ổn</td>
-                    <td className="px-3 py-3">(3) Bình thường</td>
-                    <td className="px-3 py-3">(4) Cảm thấy ổn</td>
-                    <td className="px-3 py-3">Cổ</td>
-                    <td className="px-3 py-3">7 giờ</td>
-                  </tr>{" "}
-                  <tr className="border-b">
-                    <th
-                      scope="row"
-                      className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
-                    >
-                      18/03/2025
-                    </th>
-                    <td className="px-3 py-3">(5) Nhiều năng lượng</td>
-                    <td className="px-3 py-3">(4) Tốt</td>
-                    <td className="px-3 py-3">(4) Cảm giác ổn</td>
-                    <td className="px-3 py-3">(3) Bình thường</td>
-                    <td className="px-3 py-3">(4) Cảm thấy ổn</td>
-                    <td className="px-3 py-3">Cổ</td>
-                    <td className="px-3 py-3">7 giờ</td>
-                  </tr>{" "}
-                  <tr className="border-b">
-                    <th
-                      scope="row"
-                      className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
-                    >
-                      18/03/2025
-                    </th>
-                    <td className="px-3 py-3">(5) Nhiều năng lượng</td>
-                    <td className="px-3 py-3">(4) Tốt</td>
-                    <td className="px-3 py-3">(4) Cảm giác ổn</td>
-                    <td className="px-3 py-3">(3) Bình thường</td>
-                    <td className="px-3 py-3">(4) Cảm thấy ổn</td>
-                    <td className="px-3 py-3">Cổ</td>
-                    <td className="px-3 py-3">7 giờ</td>
-                  </tr>{" "}
-                  <tr className="border-b">
-                    <th
-                      scope="row"
-                      className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
-                    >
-                      18/03/2025
-                    </th>
-                    <td className="px-3 py-3">(5) Nhiều năng lượng</td>
-                    <td className="px-3 py-3">(4) Tốt</td>
-                    <td className="px-3 py-3">(4) Cảm giác ổn</td>
-                    <td className="px-3 py-3">(3) Bình thường</td>
-                    <td className="px-3 py-3">(4) Cảm thấy ổn</td>
-                    <td className="px-3 py-3">Cổ</td>
-                    <td className="px-3 py-3">7 giờ</td>
-                  </tr>{" "}
-                  <tr className="border-b">
-                    <th
-                      scope="row"
-                      className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
-                    >
-                      18/03/2025
-                    </th>
-                    <td className="px-3 py-3">(5) Nhiều năng lượng</td>
-                    <td className="px-3 py-3">(4) Tốt</td>
-                    <td className="px-3 py-3">(4) Cảm giác ổn</td>
-                    <td className="px-3 py-3">(3) Bình thường</td>
-                    <td className="px-3 py-3">(4) Cảm thấy ổn</td>
-                    <td className="px-3 py-3">Cổ</td>
-                    <td className="px-3 py-3">7 giờ</td>
-                  </tr>
+                  {
+                    reviews.map((review, index) => (
+                      <tr key={review.id} className="border-b">
+                      <th
+                        scope="row"
+                        className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
+                      >
+                        {formatDate(review.training_date)}
+                      </th>
+                      <td className="px-3 py-3">({review.fatigue_level}) - {reviewMapping.fatigue_level[review.fatigue_level]}</td>
+                      <td className="px-3 py-3">({review.sleeping_quality}) - {reviewMapping.sleeping_quality[review.sleeping_quality]}</td>
+                      <td className="px-3 py-3">({review.muscle_soreness}) - {reviewMapping.muscle_soreness[review.muscle_soreness]}</td>
+                      <td className="px-3 py-3">({review.stress_level}) - {reviewMapping.stress_level[review.stress_level]}</td>
+                      <td className="px-3 py-3">({review.mental_state}) - {reviewMapping.mental_state[review.mental_state]}</td>
+                      <td className="px-3 py-3">Cổ</td>
+                      <td className="px-3 py-3">{review.sleep_hours} giờ</td>
+                    </tr>
+                  ))}
+
+
                 </tbody>
               </table>
             </div>

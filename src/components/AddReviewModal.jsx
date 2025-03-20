@@ -26,10 +26,10 @@ const AddReviewModal = ({ isOpen, onClose }) => {
   return (
     <div className="overflow-auto fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-opacity-100">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
-        <h2 className="text-xl font-bold mb-4">Thêm đánh giá</h2>
+        <h2 className="text-xl font-bold mb-2 p-2">Thêm đánh giá</h2>
         
         {/* Ngày tập luyện */}
-        <div className="mb-4">
+        <div className="mb-2 p-2">
           <label className="block font-medium">Ngày tập luyện</label>
           <input
             type="date"
@@ -40,7 +40,7 @@ const AddReviewModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Điểm mệt mỏi */}
-        <div className="mb-4">
+        <div className="mb-2 p-2">
           <label className="block font-medium">Điểm mệt mỏi</label>
           <select
             className="w-full p-2 border rounded"
@@ -55,7 +55,7 @@ const AddReviewModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Số giờ ngủ trung bình */}
-        <div className="mb-4">
+        <div className="mb-2 p-2">
           <label className="block font-medium">Số giờ ngủ trung bình</label>
           <select
             className="w-full p-2 border rounded"
@@ -77,7 +77,7 @@ const AddReviewModal = ({ isOpen, onClose }) => {
           { name: "stress", label: "Stress" },
           { name: "tinhThan", label: "Tinh thần" },
         ].map((item) => (
-          <div key={item.name} className="mb-4">
+          <div key={item.name} className="mb-2 p-2">
             <label className="block font-medium mb-1">{item.label}</label>
             <div className="flex flex-col sm:flex-row sm:gap-4">
               {["1. Rất mệt", "2. Mệt", "3. Bình thường", "4. Cảm thấy khỏe", "5. Khỏe"].map((option, index) => (
