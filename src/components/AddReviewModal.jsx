@@ -103,7 +103,7 @@ const AddReviewModal = ({ isOpen, onClose, setReviews }) => {
 
   return (
     <div className="overflow-auto fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-opacity-100">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] my-4 overflow-y-auto">
         <h2 className="text-xl font-bold mb-2 p-2">Thêm đánh giá</h2>
 
         {/* Ngày tập luyện */}
@@ -119,9 +119,9 @@ const AddReviewModal = ({ isOpen, onClose, setReviews }) => {
 
         {/* Điểm mệt mỏi */}
         <div className="mb-2 p-2">
-          <label className="block font-medium">Điểm mệt mỏi</label>
+          <label className="block font-semibold">Điểm mệt mỏi</label>
           <input
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded text-sm"
             value={ratings.muscle_soreness_point}
             onChange={(e) => handleRatingChange("muscle_soreness_point", e.target.value)}
           >
@@ -136,15 +136,15 @@ const AddReviewModal = ({ isOpen, onClose, setReviews }) => {
 
         {/* Số giờ ngủ trung bình */}
         <div className="mb-2 p-2">
-          <label className="block font-medium">Số giờ ngủ trung bình</label>
+          <label className="block font-semibold">Số giờ ngủ trung bình</label>
           <select
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded text-sm"
             value={ratings.sleep_hours}
             onChange={(e) => handleRatingChange("sleep_hours", e.target.value)}
           >
-            <option value="">Chọn số giờ</option>
+            <option className="text-sm" value="">Chọn số giờ</option>
             {[...Array(25).keys()].map((num) => (
-              <option key={num} value={num}>
+              <option className="text-sm" key={num} value={num}>
                 {num}
               </option>
             ))}
@@ -161,20 +161,20 @@ const AddReviewModal = ({ isOpen, onClose, setReviews }) => {
             { name: "mental_state", label: "Tinh thần" },
           ].map((item) => (
             <div key={item.name} className="mb-2 p-2">
-              <label className="block font-medium mb-1">{item.label}</label>
-              <div className="flex flex-col sm:flex-row sm:gap-4">
+              <label className="block font-semibold mb-1">{item.label}</label>
+              <div className="grid grid-cols-5 gap-2 items-center">
                 {[1, 2, 3, 4, 5
                 ].map((option, index) => (
-                  <label key={index} className="flex items-center gap-2">
+                  <label key={index} className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
                       name={item.name}
                       value={option}
-                      className="form-radio text-gray-600"
+                      className="w-5 h-5 form-radio text-gray-600 focus:ring-gray-700"
                       checked={ratings[item.name] === option}
                       onChange={() => handleRatingChange(item.name, option)}
                     />
-                    <span>{option} - {reviewMapping[item.name][option]}</span>
+                    <span  className="text-sm">{reviewMapping[item.name][option]}</span>
                   </label>
                 ))}
               </div>
@@ -183,7 +183,7 @@ const AddReviewModal = ({ isOpen, onClose, setReviews }) => {
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 mt-4 ">
           <button
             className="hover:cursor-pointer hover:bg-gray-300 px-4 py-2 bg-gray-200 rounded"
             onClick={onClose}

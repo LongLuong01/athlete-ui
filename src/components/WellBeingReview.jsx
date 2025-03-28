@@ -5,6 +5,10 @@ export default function WellBeingReview() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const athleteId = 1;
   const [reviews, setReviews] = useState([]);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 10;
+
   function formatDate(dateString) {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
@@ -55,10 +59,11 @@ export default function WellBeingReview() {
   const fetchReviews = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/wellbeing/athlete?athlete_id=${athleteId}`
+        `http://localhost:5000/api/wellbeing/athlete?athlete_id=${athleteId}&page=${currentPage}&limit=${reviewsPerPage}`
       );
       const data = await response.json();
-      setReviews(data);
+      setReviews(data.reviews);
+      setTotalReviews(data.total);
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu:", error);
     }
@@ -68,11 +73,50 @@ export default function WellBeingReview() {
     if (athleteId) {
       fetchReviews();
     }
-  }, [athleteId]);
+  }, [athleteId, currentPage]);
+
+  const totalPages = Math.ceil(totalReviews / reviewsPerPage);
+  const startItem = (currentPage - 1) * reviewsPerPage + 1;
+  const endItem = Math.min(currentPage * reviewsPerPage, totalReviews);
+
+  // Hàm tạo danh sách số trang với `...` khi cần
+  const generatePagination = () => {
+    let pages = [];
+    if (totalPages <= 7) {
+      pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    } else {
+      if (currentPage <= 4) {
+        pages = [1, 2, 3, 4, "...", totalPages];
+      } else if (currentPage >= totalPages - 3) {
+        pages = [
+          1,
+          "...",
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        ];
+      } else {
+        pages = [
+          1,
+          "...",
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          "...",
+          totalPages,
+        ];
+      }
+    }
+    return pages;
+  };
+
+  const paginationNumbers = generatePagination();
 
   return (
     <>
-      <div className="sm:ml-64 ">
+      {/* <div className="sm:ml-64"> */}
+      <div>
         <div className="h-full mx-auto max-w-screen-xl px-3 lg:px-8 lg:py-16">
           <div className="bg-white relative shadow-md sm:rounded-lg overflow-hidden">
             {/* Header */}
@@ -173,7 +217,7 @@ export default function WellBeingReview() {
                 </thead>
                 <tbody>
                   {reviews.map((review, index) => (
-                    <tr key={review.id} className="border-b">
+                    <tr key={index} className="border-b">
                       <th
                         scope="row"
                         className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
@@ -204,7 +248,9 @@ export default function WellBeingReview() {
                         ({review.mental_state}){" "}
                         {reviewMapping.mental_state[review.mental_state]}
                       </td>
-                      <td className="px-3 py-3">{review.muscle_soreness_point}</td>
+                      <td className="px-3 py-3">
+                        {review.muscle_soreness_point}
+                      </td>
                       <td className="px-3 py-3">{review.sleep_hours} giờ</td>
                     </tr>
                   ))}
@@ -214,102 +260,68 @@ export default function WellBeingReview() {
 
             {/* Pagination */}
             <nav
-              className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
+              className="flex flex-col md:flex-row justify-between items-center p-4"
               aria-label="Table navigation"
             >
               <span className="text-sm font-normal text-gray-500">
                 Showing
-                <span className="font-semibold text-gray-900 ">
-                  &nbsp;1-10&nbsp;
+                <span className="font-semibold text-gray-900">
+                  {" "}
+                  {startItem}-{endItem}{" "}
                 </span>
                 of
-                <span className="font-semibold text-gray-900 ">&nbsp;1000</span>
+                <span className="font-semibold text-gray-900">
+                  {" "}
+                  {totalReviews}{" "}
+                </span>
               </span>
-              <ul className="inline-flex items-stretch -space-x-px">
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 "
+
+              <div className="flex items-center space-x-1">
+                {/* Nút Previous */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={`px-3 py-1 border rounded ${
+                    currentPage === 1
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "hover:bg-gray-200"
+                  }`}
+                  disabled={currentPage === 1}
+                >
+                  ‹
+                </button>
+
+                {/* Hiển thị danh sách số trang */}
+                {paginationNumbers.map((num, index) => (
+                  <button
+                    key={index}
+                    onClick={() => num !== "..." && setCurrentPage(num)}
+                    className={`px-3 py-1 border rounded ${
+                      currentPage === num
+                        ? "bg-blue-500 text-white"
+                        : "hover:bg-gray-200"
+                    }`}
                   >
-                    <span className="sr-only">Previous</span>
-                    <svg
-                      className="w-5 h-5"
-                      aria-hidden="true"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 "
-                  >
-                    1
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 "
-                  >
-                    2
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    aria-current="page"
-                    className="flex items-center justify-center text-sm z-10 py-2 px-3 leading-tight text-primary-600 bg-primary-50 border border-primary-300 hover:bg-primary-100 hover:text-primary-700 "
-                  >
-                    3
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 "
-                  >
-                    ...
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 "
-                  >
-                    100
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 "
-                  >
-                    <span className="sr-only">Next</span>
-                    <svg
-                      className="w-5 h-5"
-                      aria-hidden="true"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </a>
-                </li>
-              </ul>
+                    {num}
+                  </button>
+                ))}
+
+                {/* Nút Next */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  className={`px-3 py-1 border rounded ${
+                    currentPage === totalPages
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "hover:bg-gray-200"
+                  }`}
+                  disabled={currentPage === totalPages}
+                >
+                  ›
+                </button>
+              </div>
             </nav>
           </div>
         </div>
