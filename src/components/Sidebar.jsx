@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 export default function Sidebar() {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const athleteId = user.id;
   const [athlete, setAthlete] = useState();
 
@@ -101,7 +101,7 @@ export default function Sidebar() {
             </li>
 
             {/* Inbox */}
-            <li>
+            {/* <li>
               <a
                 href="#"
                 className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
@@ -120,7 +120,7 @@ export default function Sidebar() {
                   3
                 </span>
               </a>
-            </li>
+            </li> */}
 
             {/* Infomation */}
             <li>
@@ -144,7 +144,7 @@ export default function Sidebar() {
             </li>
 
             {/* Log out */}
-            <li>
+            <li onClick={logout}>
               <a
                 href="#"
                 className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-100 group"
@@ -174,13 +174,13 @@ export default function Sidebar() {
                 <div className="avatar ">
                   <img
                     className="w-12 h-12 rounded-full flex items-center justify-center"
-                    src="../../public/download.jpg"
+                    src={athlete && athlete.avatar ? athlete.avatar : "../public/default-user-avatar.png"}
                     alt=""
                   />
                 </div>
                 <div className="name-email">
                   <p className="font-semibold text-xs text-gray-900 mb-0.5">
-                  {athlete && athlete.fullname ? athlete.fullname : "unknown"}
+                    {athlete && athlete.fullname ? athlete.fullname : "unknown"}
                   </p>
                   <p className="font-medium text-xs text-gray-500">
                     @{athlete && athlete.email ? athlete.email : "unknown"}

@@ -119,7 +119,7 @@ const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
 
         {/* Điểm mệt mỏi */}
         <div className="mb-2 p-2">
-          <label className="block font-semibold">Điểm mệt mỏi</label>
+          <label className="block font-semibold">Điểm mệt mỏi <span className="font-extralight">(Cổ, Hông, Đầu gối, Cánh tay, ...)</span></label>
           <input
             className="w-full p-2 border rounded text-sm"
             value={ratings.muscle_soreness_point}

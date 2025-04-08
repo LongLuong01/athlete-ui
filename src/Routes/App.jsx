@@ -29,6 +29,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/review" element={<PrivateRoute><WellBeingReview /></PrivateRoute>} />
         </Routes>
       </AuthProvider>
