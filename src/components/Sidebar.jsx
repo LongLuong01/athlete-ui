@@ -1,4 +1,30 @@
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
+
 export default function Sidebar() {
+  const { user } = useContext(AuthContext);
+  const athleteId = user.id;
+  const [athlete, setAthlete] = useState();
+
+  // Fetch review data của athlete
+  const fetchAthlete = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/athletes/${athleteId}`
+      );
+      const data = await response.json();
+      setAthlete(data);
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (athleteId) {
+      fetchAthlete();
+    }
+  }, []);
+
   return (
     <>
       <button
@@ -30,7 +56,8 @@ export default function Sidebar() {
         className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 py-4 lg:py-16 overflow-y-auto bg-gray-50 ">
+        <div className="h-full px-3 pt-4 lg:pt-16 overflow-y-auto bg-gray-50 flex flex-col justify-between">
+          {/* Sidebar body */}
           <ul className="space-y-2 font-medium">
             {/* Dashboard */}
             <li>
@@ -140,6 +167,28 @@ export default function Sidebar() {
               </a>
             </li>
           </ul>
+          {/* Footer */}
+          <div className="sidebar-footer flex-shrink-0">
+            <div className="py-5 px-4 flex justify-between items-center border-t border-solid border-gray-200">
+              <div className="user flex items-center gap-2.5">
+                <div className="avatar ">
+                  <img
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    src="../../public/download.jpg"
+                    alt=""
+                  />
+                </div>
+                <div className="name-email">
+                  <p className="font-semibold text-xs text-gray-900 mb-0.5">
+                  {athlete && athlete.fullname ? athlete.fullname : "unknown"}
+                  </p>
+                  <p className="font-medium text-xs text-gray-500">
+                    @{athlete && athlete.email ? athlete.email : "unknown"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
     </>

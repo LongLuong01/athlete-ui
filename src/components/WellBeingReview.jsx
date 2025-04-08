@@ -1,9 +1,12 @@
 import AddReviewModal from "./AddReviewModal";
-import { useState, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
+
 
 export default function WellBeingReview() {
+  const { user } = useContext(AuthContext);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const athleteId = 1;
+  const athleteId = user.id;
   const [reviews, setReviews] = useState([]);
   const [totalReviews, setTotalReviews] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,7 +76,7 @@ export default function WellBeingReview() {
     if (athleteId) {
       fetchReviews();
     }
-  }, [athleteId, currentPage]);
+  }, [user, currentPage]);
 
   const totalPages = Math.ceil(totalReviews / reviewsPerPage);
   const startItem = (currentPage - 1) * reviewsPerPage + 1;
@@ -181,6 +184,7 @@ export default function WellBeingReview() {
                 isOpen={isReviewModalOpen}
                 onClose={() => setIsReviewModalOpen(false)}
                 setReviews={setReviews} // Truyền hàm cập nhật danh sách
+                athleteId={athleteId} // Truyền athleteId vào modal
               />
             )}
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const AddReviewModal = ({ isOpen, onClose, setReviews }) => {
+const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
   const today = new Date()
     .toLocaleDateString("en-GB")
     .split("/")
@@ -69,7 +69,7 @@ const AddReviewModal = ({ isOpen, onClose, setReviews }) => {
     // alert("Lưu đánh giá thành công!");
     // onClose();
     const reviewData = {
-      athlete_id: 1,
+      athlete_id: athleteId,
       training_date: selectedDate,
       muscle_soreness_point: ratings.muscle_soreness_point,
       sleep_hours: ratings.sleep_hours,
