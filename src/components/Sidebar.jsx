@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
+import API_BASE_URL from "../config";
 
 export default function Sidebar() {
   const { user, logout } = useContext(AuthContext);
@@ -10,7 +11,7 @@ export default function Sidebar() {
   const fetchAthlete = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/athletes/${athleteId}`
+        `${API_BASE_URL}/api/athletes/${athleteId}`
       );
       const data = await response.json();
       setAthlete(data);

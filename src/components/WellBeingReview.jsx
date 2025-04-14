@@ -1,7 +1,7 @@
 import AddReviewModal from "./AddReviewModal";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-
+import API_BASE_URL from "../config";
 
 export default function WellBeingReview() {
   const { user } = useContext(AuthContext);
@@ -62,7 +62,7 @@ export default function WellBeingReview() {
   const fetchReviews = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/wellbeing/athlete?athlete_id=${athleteId}&page=${currentPage}&limit=${reviewsPerPage}`
+        `${API_BASE_URL}/api/wellbeing/athlete?athlete_id=${athleteId}&page=${currentPage}&limit=${reviewsPerPage}`
       );
       const data = await response.json();
       setReviews(data.reviews);

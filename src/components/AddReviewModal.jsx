@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import API_BASE_URL from "../config";
 
 const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
   const today = new Date()
@@ -81,7 +82,7 @@ const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
     };
     console.log(reviewData)
     try {
-      const response = await fetch("http://localhost:5000/api/wellbeing", {
+      const response = await fetch(`${API_BASE_URL}/api/wellbeing`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
