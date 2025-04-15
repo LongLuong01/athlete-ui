@@ -78,7 +78,7 @@ export default function WellBeingReview() {
     if (searchParams.get("openModal") === "true") {
       setIsReviewModalOpen(true);
     }
-  }, []);
+  },  [searchParams]);
 
   useEffect(() => {
     if (athleteId) {
