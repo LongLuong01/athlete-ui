@@ -1,16 +1,18 @@
 import AddReviewModal from "./AddReviewModal";
 import { useContext, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import API_BASE_URL from "../../config";
 
 export default function WellBeingReview() {
   const { user } = useContext(AuthContext);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const athleteId = user.id;
   const [reviews, setReviews] = useState([]);
   const [totalReviews, setTotalReviews] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsPerPage = 10;
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -71,6 +73,12 @@ export default function WellBeingReview() {
       console.error("Lỗi khi lấy dữ liệu:", error);
     }
   };
+
+  useEffect(() => {
+    if (searchParams.get("openModal") === "true") {
+      setIsReviewModalOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (athleteId) {
@@ -179,7 +187,9 @@ export default function WellBeingReview() {
                 </button>
               </div>
             </div>
-            {isReviewModalOpen && (
+
+            {/* Add Review Modal */}
+            {isReviewModalOpen && ( 
               <AddReviewModal
                 isOpen={isReviewModalOpen}
                 onClose={() => setIsReviewModalOpen(false)}

@@ -6,6 +6,11 @@ export default function Sidebar() {
   const { user, logout } = useContext(AuthContext);
   const athleteId = user.id;
   const [athlete, setAthlete] = useState();
+  const [isOpen, setIsOpen] = useState(false); // Toggle state
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
 
   // Fetch review data của athlete
   const fetchAthlete = async () => {
@@ -28,10 +33,9 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Nút mở menu */}
       <button
-        data-drawer-target="default-sidebar"
-        data-drawer-toggle="default-sidebar"
-        aria-controls="default-sidebar"
+        onClick={toggleSidebar}
         type="button"
         className="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
       >
@@ -52,9 +56,11 @@ export default function Sidebar() {
         </svg>
       </button>
 
+      {/* Sidebar */}
       <aside
-        id="default-sidebar"
-        className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
+        className={`fixed top-0 left-0 z-40 w-64 h-screen bg-white transition-transform ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        } sm:translate-x-0`}
         aria-label="Sidebar"
       >
         <div className="h-full px-3 pt-4 lg:pt-16 overflow-y-auto bg-gray-50 flex flex-col justify-between">
