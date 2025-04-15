@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
         if (decoded) {
           setUser({ id: decoded.id, role: decoded.role });
           // navigate('/review')
-          navigate(from, { replace: true });
+          // navigate(from, { replace: true });
         }
       } catch (error) {
         console.error("Lỗi giải mã token:", error);

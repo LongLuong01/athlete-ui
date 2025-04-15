@@ -1,6 +1,6 @@
 import React from "react";
 import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation  } from "react-router-dom";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider, AuthContext } from "../context/AuthContext";
 import Login from "../pages/Login";
@@ -10,6 +10,7 @@ import Sidebar from "../components/Sidebar";
 // Component bảo vệ trang admin
 const PrivateRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
   console.log("private route");
   return user ? (
     <div>
@@ -21,7 +22,7 @@ const PrivateRoute = ({ children }) => {
       </div>{" "}
     </div>
   ) : (
-    <Navigate to="/login" />
+    <Navigate to="/login" state={{ from: location }} replace />
   );
 };
 
