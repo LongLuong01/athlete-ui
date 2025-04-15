@@ -11,7 +11,6 @@ import Sidebar from "../components/Sidebar";
 const PrivateRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
-  console.log("private route");
   return user ? (
     <div>
       <div className="flex overflow-y-hidden bg-white font-inter">
