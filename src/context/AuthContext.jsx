@@ -1,6 +1,6 @@
 // AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
@@ -14,9 +14,10 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        if(decoded){
+        if (decoded) {
           setUser({ id: decoded.id, role: decoded.role });
-          navigate('/review')
+          // navigate('/review')
+          navigate(from, { replace: true });
         }
       } catch (error) {
         console.error("Lỗi giải mã token:", error);
@@ -25,13 +26,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = (token) => {
-  const decoded = jwtDecode(token.token);
-  if(decoded){
-    localStorage.setItem('token', token.token)
-    setUser({ id: decoded.id, role: decoded.role });
-    navigate('/review')
-  }
+  const login = (token, from) => {
+    const decoded = jwtDecode(token.token);
+    if (decoded) {
+      localStorage.setItem("token", token.token);
+      setUser({ id: decoded.id, role: decoded.role });
+      // navigate("/review");
+      navigate(from, { replace: true });
+    }
   };
 
   const logout = () => {
