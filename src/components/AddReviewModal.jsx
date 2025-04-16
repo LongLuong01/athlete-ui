@@ -1,220 +1,223 @@
 import React, { useState } from "react";
 import API_BASE_URL from "../../config";
+import { REVIEW_MAPPINGS } from "../constants/reviewMappings";
+import Toast from "./Toast";
+import { useToast } from "../hooks/useToast";
+import { wellbeingApi } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
-const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
-  const today = new Date()
-    .toLocaleDateString("en-GB")
-    .split("/")
-    .reverse()
-    .join("-");
-  const [selectedDate, setSelectedDate] = useState(today);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [ratings, setRatings] = useState({
-    muscle_soreness_point: "",
-    sleep_hours: "",
+const AddReviewModal = ({ isOpen, onClose, onSuccess = () => {} }) => {
+  const { user } = useAuth();
+  const { toast, showToast, hideToast } = useToast();
+  const today = new Date().toISOString().split('T')[0];
+  const [formData, setFormData] = useState({
+    training_date: today,
     fatigue_level: "",
     sleeping_quality: "",
     muscle_soreness: "",
     stress_level: "",
     mental_state: "",
+    muscle_soreness_point: "",
+    sleep_hours: "",
+    notes: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const reviewMapping = {
-    fatigue_level: {
-      5: "Nhiều năng lượng",
-      4: "Năng lượng",
-      3: "Bình thường",
-      2: "Mệt mỏi hơn bình thường",
-      1: "Luôn cảm thấy mệt mỏi"
-    },
-    sleeping_quality: {
-      5: "Rất tốt",
-      4: "Tốt",
-      3: "Khó vào giấc",
-      2: "Ngủ không sâu",
-      1: "Mất ngủ"
-    },
-    muscle_soreness: {
-      5: "Cảm giác tốt",
-      4: "Cảm giác ổn",
-      3: "Bình thường",
-      2: "Căng mỏi nhẹ",
-      1: "Rất căng mỏi (đau)"
-    },
-    stress_level: {
-      5: "Rất thư giãn",
-      4: "Thư giãn",
-      3: "Bình thường",
-      2: "Cảm giác hơi stress",
-      1: "Rất stress"
-    },
-    mental_state: {
-      5: "Rất phấn chấn",
-      4: "Cảm thấy ổn",
-      3: "Ít hứng thú tập luyện",
-      2: "Dễ khó chịu với mọi người",
-      1: "Rất khó chịu với mọi người"
-    }
-  };
-
-  const handleRatingChange = (category, value) => {
-    setRatings({ ...ratings, [category]: value });
-  };
-
-  const handleBackgroundClick = (e) => {
-    if (e.target.id === "modal-background") {
-      onClose();
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (isSubmitting) return; // Prevent multiple submissions
+  const validateForm = () => {
+    const requiredFields = [
+      "fatigue_level",
+      "sleeping_quality",
+      "muscle_soreness",
+      "stress_level",
+      "mental_state",
+      "muscle_soreness_point",
+      "sleep_hours",
+      "training_date"
+    ];
+    const emptyFields = requiredFields.filter(field => !formData[field]);
     
-    setIsSubmitting(true);
-    const reviewData = {
-      athlete_id: athleteId,
-      training_date: selectedDate,
-      muscle_soreness_point: ratings.muscle_soreness_point,
-      sleep_hours: ratings.sleep_hours,
-      fatigue_level: ratings.fatigue_level,
-      sleeping_quality: ratings.sleeping_quality,
-      muscle_soreness: ratings.muscle_soreness,
-      stress_level: ratings.stress_level,
-      mental_state: ratings.mental_state,
-    };
-    
+    if (emptyFields.length > 0) {
+      showToast("Vui lòng điền đầy đủ thông tin đánh giá", "error");
+      return false;
+    }
+
+    const sleepHours = Number(formData.sleep_hours);
+    if (sleepHours < 0 || sleepHours > 23) {
+      showToast("Số giờ ngủ phải từ 0 đến 23", "error");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/wellbeing`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(reviewData),
-      });
-      if (response.ok) {
-        alert("Lưu đánh giá thành công!");
-        setReviews((prevReviews) => [reviewData, ...prevReviews]);
-        onClose();
-      } else {
-        alert("Lỗi khi lưu đánh giá!");
-      }
+      setIsSubmitting(true);
+      const token = localStorage.getItem('token');
+      
+      // Convert numeric fields to numbers
+      const reviewData = {
+        athlete_id: user.id,
+        training_date: formData.training_date,
+        fatigue_level: Number(formData.fatigue_level),
+        sleeping_quality: Number(formData.sleeping_quality),
+        muscle_soreness: Number(formData.muscle_soreness),
+        stress_level: Number(formData.stress_level),
+        mental_state: Number(formData.mental_state),
+        muscle_soreness_point: formData.muscle_soreness_point,
+        sleep_hours: Number(formData.sleep_hours),
+        notes: formData.notes || ""
+      };
+
+      await wellbeingApi.createReview(reviewData, token);
+      
+      onSuccess();
+      onClose();
     } catch (error) {
-      console.error("Lỗi API:", error);
-      alert("Có lỗi xảy ra, vui lòng thử lại!");
+      console.error("Error submitting review:", error);
+      showToast("Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <div className="overflow-auto fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-opacity-100">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] my-4 overflow-y-auto">
-        <h2 className="text-xl font-bold mb-2 p-2">Thêm đánh giá</h2>
-
-        {/* Ngày tập luyện */}
-        <div className="mb-2 p-2">
-          <label className="block font-medium">Ngày tập luyện</label>
-          <input
-            type="date"
-            className="w-full p-2 border rounded"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-        </div>
-
-        {/* Điểm mệt mỏi */}
-        <div className="mb-2 p-2">
-          <label className="block font-semibold">Điểm mệt mỏi <span className="font-extralight">(Cổ, Hông, Đầu gối, Cánh tay, ...)</span></label>
-          <input
-            className="w-full p-2 border rounded text-sm"
-            value={ratings.muscle_soreness_point}
-            onChange={(e) => handleRatingChange("muscle_soreness_point", e.target.value)}
-          >
-            {/* <option value="">Chọn điểm</option>
-            {[...Array(11).keys()].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))} */}
-          </input>
-        </div>
-
-        {/* Số giờ ngủ trung bình */}
-        <div className="mb-2 p-2">
-          <label className="block font-semibold">Số giờ ngủ trung bình</label>
-          <select
-            className="w-full p-2 border rounded text-sm"
-            value={ratings.sleep_hours}
-            onChange={(e) => handleRatingChange("sleep_hours", e.target.value)}
-          >
-            <option className="text-sm" value="">Chọn số giờ</option>
-            {[...Array(25).keys()].map((num) => (
-              <option className="text-sm" key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Radio Buttons */}
-        <div>
-          {[
-            { name: "fatigue_level", label: "Mệt mỏi" },
-            { name: "sleeping_quality", label: "Chất lượng giấc ngủ" },
-            { name: "muscle_soreness", label: "Đau nhức cơ bắp" },
-            { name: "stress_level", label: "Mức độ stress" },
-            { name: "mental_state", label: "Tinh thần" },
-          ].map((item) => (
-            <div key={item.name} className="mb-2 p-2">
-              <label className="block font-semibold mb-1">{item.label}</label>
-              <div className="grid grid-cols-5 gap-2 items-center">
-                {[1, 2, 3, 4, 5
-                ].map((option, index) => (
-                  <label key={index} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name={item.name}
-                      value={option}
-                      className="w-5 h-5 form-radio text-gray-600 focus:ring-gray-700"
-                      checked={ratings[item.name] === option}
-                      onChange={() => handleRatingChange(item.name, option)}
-                    />
-                    <span  className="text-sm">{reviewMapping[item.name][option]}</span>
-                  </label>
-                ))}
-              </div>
+    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto h-max-">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] my-4 overflow-y-auto">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Thêm đánh giá mới</h3>
+          <form onSubmit={handleSubmit}>
+            {/* Training Date */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ngày tập luyện
+              </label>
+              <input
+                type="date"
+                name="training_date"
+                value={formData.training_date}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+                required
+              />
             </div>
-          ))}
-        </div>
 
-        {/* Buttons */}
-        <div className="flex justify-end gap-2 mt-4 ">
-          <button
-            className="hover:cursor-pointer hover:bg-gray-300 px-4 py-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={onClose}
-            disabled={isSubmitting}
-          >
-            Hủy
-          </button>
-          <button 
-            className="px-4 py-2 bg-blue-500 hover:cursor-pointer hover:bg-blue-600 text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Đang lưu...
-              </>
-            ) : (
-              'Lưu'
-            )}
-          </button>
+            {/* Muscle Soreness Point */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Điểm đau nhức cơ bắp
+              </label>
+              <input
+                type="text"
+                name="muscle_soreness_point"
+                value={formData.muscle_soreness_point}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+                required
+              />
+            </div>
+
+            {/* Sleep Hours */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Số giờ ngủ trung bình (0-23)
+              </label>
+              <input
+                type="number"
+                name="sleep_hours"
+                value={formData.sleep_hours}
+                onChange={handleChange}
+                min="0"
+                max="23"
+                step="1"
+                className="w-full p-2 border rounded-md"
+                required
+              />
+            </div>
+
+            {/* Rating Fields */}
+            {Object.entries(REVIEW_MAPPINGS).map(([key, options]) => (
+              <div key={key} className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {key === 'fatigue_level' ? 'Mệt mỏi' :
+                   key === 'sleeping_quality' ? 'Chất lượng giấc ngủ' :
+                   key === 'muscle_soreness' ? 'Đau nhức cơ bắp' :
+                   key === 'stress_level' ? 'Mức độ stress' :
+                   'Tinh thần'}
+                </label>
+                <select
+                  name={key}
+                  value={formData[key]}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
+                  className="w-full p-2 border rounded-md"
+                  required
+                >
+                  <option value="">Chọn đánh giá</option>
+                  {Object.entries(options).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ghi chú
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className="w-full p-2 border rounded-md"
+                rows="3"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isSubmitting ? "Đang gửi..." : "Gửi đánh giá"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
+
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };

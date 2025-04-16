@@ -1,15 +1,20 @@
 import AddReviewModal from "./AddReviewModal";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import API_BASE_URL from "../../config";
+import { useAuth } from "../context/AuthContext";
+import { wellbeingApi } from "../services/api";
+import { REVIEW_MAPPINGS } from "../constants/reviewMappings";
+import Toast from "./Toast";
+import { useToast } from "../hooks/useToast";
 
 export default function WellBeingReview() {
-  const { user } = useContext(AuthContext);
+  const { user, userInfo } = useAuth();
   const athleteId = user.id;
   const [reviews, setReviews] = useState([]);
   const [totalReviews, setTotalReviews] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast, showToast, hideToast } = useToast();
   const reviewsPerPage = 10;
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
@@ -17,60 +22,29 @@ export default function WellBeingReview() {
   function formatDate(dateString) {
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Tháng được tính từ 0
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   }
 
-  const reviewMapping = {
-    fatigue_level: {
-      5: "Nhiều năng lượng",
-      4: "Năng lượng",
-      3: "Bình thường",
-      2: "Mệt mỏi hơn bình thường",
-      1: "Luôn cảm thấy mệt mỏi",
-    },
-    sleeping_quality: {
-      5: "Rất tốt",
-      4: "Tốt",
-      3: "Khó vào giấc",
-      2: "Ngủ không sâu",
-      1: "Mất ngủ",
-    },
-    muscle_soreness: {
-      5: "Cảm giác tốt",
-      4: "Cảm giác ổn",
-      3: "Bình thường",
-      2: "Căng mỏi nhẹ",
-      1: "Rất căng mỏi (đau)",
-    },
-    stress_level: {
-      5: "Rất thư giãn",
-      4: "Thư giãn",
-      3: "Bình thường",
-      2: "Cảm giác hơi stress",
-      1: "Rất stress",
-    },
-    mental_state: {
-      5: "Rất phấn chấn",
-      4: "Cảm thấy ổn",
-      3: "Ít hứng thú tập luyện",
-      2: "Dễ khó chịu với mọi người",
-      1: "Rất khó chịu với mọi người",
-    },
-  };
-
-  // Fetch review data của athlete
+  // Fetch review data
   const fetchReviews = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/wellbeing/athlete?athlete_id=${athleteId}&page=${currentPage}&limit=${reviewsPerPage}`
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
+      const data = await wellbeingApi.getAthleteReviews(
+        athleteId,
+        currentPage,
+        reviewsPerPage,
+        token
       );
-      const data = await response.json();
       setReviews(data.reviews);
       setTotalReviews(data.total);
     } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
+      console.error("Error fetching reviews:", error);
+      showToast("Không thể tải dữ liệu đánh giá. Vui lòng thử lại sau.", "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -78,13 +52,13 @@ export default function WellBeingReview() {
     if (searchParams.get("openModal") === "true") {
       setIsReviewModalOpen(true);
     }
-  },  [searchParams]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (athleteId) {
       fetchReviews();
     }
-  }, [user, currentPage]);
+  }, [athleteId, currentPage]);
 
   const totalPages = Math.ceil(totalReviews / reviewsPerPage);
   const startItem = (currentPage - 1) * reviewsPerPage + 1;
@@ -189,88 +163,101 @@ export default function WellBeingReview() {
             </div>
 
             {/* Add Review Modal */}
-            {isReviewModalOpen && ( 
+            {isReviewModalOpen && (
               <AddReviewModal
                 isOpen={isReviewModalOpen}
                 onClose={() => setIsReviewModalOpen(false)}
-                setReviews={setReviews} // Truyền hàm cập nhật danh sách
-                athleteId={athleteId} // Truyền athleteId vào modal
+                onSuccess={() => {
+                  fetchReviews();
+                  setIsReviewModalOpen(false);
+                  showToast("Đánh giá đã được gửi thành công!", "success");
+                }}
               />
             )}
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-500">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-3 py-3">
-                      Ngày tập luyện
-                    </th>
-                    <th scope="col" className="px-3 py-3">
-                      Mệt mỏi
-                    </th>
-                    <th scope="col" className="px-3 py-3">
-                      Chất lượng giấc ngủ
-                    </th>
-                    <th scope="col" className="px-3 py-3">
-                      Đau nhức cơ bắp
-                    </th>
-                    <th scope="col" className="px-3 py-3">
-                      Mức độ Stress
-                    </th>
-                    <th scope="col" className="px-3 py-3">
-                      Tinh thần
-                    </th>
-                    <th scope="col" className="px-3 py-3">
-                      Điểm đau nhức cơ bắp
-                    </th>
-                    <th scope="col" className="px-3 py-3">
-                      Giờ ngủ TB/ngày
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reviews.map((review, index) => (
-                    <tr key={index} className="border-b">
-                      <th
-                        scope="row"
-                        className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap "
-                      >
-                        {formatDate(review.training_date)}
+            {/* Error message */}
+            {toast.show && (
+              <Toast
+                message={toast.message}
+                type={toast.type}
+                onClose={hideToast}
+              />
+            )}
+
+            {/* Loading state */}
+            {isLoading ? (
+              <div className="flex justify-center items-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              </div>
+            ) : (
+              /* Table */
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left text-gray-500">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-3 py-3">
+                        Ngày tập luyện
                       </th>
-                      <td className="px-3 py-3">
-                        ({review.fatigue_level}){" "}
-                        {reviewMapping.fatigue_level[review.fatigue_level]}
-                      </td>
-                      <td className="px-3 py-3">
-                        ({review.sleeping_quality}){" "}
-                        {
-                          reviewMapping.sleeping_quality[
-                            review.sleeping_quality
-                          ]
-                        }
-                      </td>
-                      <td className="px-3 py-3">
-                        ({review.muscle_soreness}){" "}
-                        {reviewMapping.muscle_soreness[review.muscle_soreness]}
-                      </td>
-                      <td className="px-3 py-3">
-                        ({review.stress_level}){" "}
-                        {reviewMapping.stress_level[review.stress_level]}
-                      </td>
-                      <td className="px-3 py-3">
-                        ({review.mental_state}){" "}
-                        {reviewMapping.mental_state[review.mental_state]}
-                      </td>
-                      <td className="px-3 py-3">
-                        {review.muscle_soreness_point}
-                      </td>
-                      <td className="px-3 py-3">{review.sleep_hours} giờ</td>
+                      <th scope="col" className="px-3 py-3">
+                        Mệt mỏi
+                      </th>
+                      <th scope="col" className="px-3 py-3">
+                        Chất lượng giấc ngủ
+                      </th>
+                      <th scope="col" className="px-3 py-3">
+                        Đau nhức cơ bắp
+                      </th>
+                      <th scope="col" className="px-3 py-3">
+                        Mức độ Stress
+                      </th>
+                      <th scope="col" className="px-3 py-3">
+                        Tinh thần
+                      </th>
+                      <th scope="col" className="px-3 py-3">
+                        Điểm đau nhức cơ bắp
+                      </th>
+                      <th scope="col" className="px-3 py-3">
+                        Giờ ngủ TB/ngày
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {reviews.map((review, index) => (
+                      <tr key={index} className="border-b">
+                        <th
+                          scope="row"
+                          className="px-3 py-3 font-medium text-gray-900 whitespace-nowrap"
+                        >
+                          {formatDate(review.training_date)}
+                        </th>
+                        <td className="px-3 py-3">
+                          ({review.fatigue_level}){" "}
+                          {REVIEW_MAPPINGS.fatigue_level[review.fatigue_level]}
+                        </td>
+                        <td className="px-3 py-3">
+                          ({review.sleeping_quality}){" "}
+                          {REVIEW_MAPPINGS.sleeping_quality[review.sleeping_quality]}
+                        </td>
+                        <td className="px-3 py-3">
+                          ({review.muscle_soreness}){" "}
+                          {REVIEW_MAPPINGS.muscle_soreness[review.muscle_soreness]}
+                        </td>
+                        <td className="px-3 py-3">
+                          ({review.stress_level}){" "}
+                          {REVIEW_MAPPINGS.stress_level[review.stress_level]}
+                        </td>
+                        <td className="px-3 py-3">
+                          ({review.mental_state}){" "}
+                          {REVIEW_MAPPINGS.mental_state[review.mental_state]}
+                        </td>
+                        <td className="px-3 py-3">{review.muscle_soreness_point}</td>
+                        <td className="px-3 py-3">{review.sleep_hours} giờ</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Pagination */}
             <nav

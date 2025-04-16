@@ -1,17 +1,25 @@
 import React from "react";
 import { useContext } from "react";
-import { Navigate, useLocation  } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider, AuthContext } from "../context/AuthContext";
 import Login from "../pages/Login";
 import WellBeingReview from "../components/WellBeingReview";
+import Dashboard from "../pages/Dashboard";
+import UserInformation from "../pages/UserInformation";
 import Sidebar from "../components/Sidebar";
 
 // Component bảo vệ trang admin
 const PrivateRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
+  const { user, isAuthenticated } = useContext(AuthContext);
   const location = useLocation();
-  return user ? (
+
+  if (!isAuthenticated) {
+    // Save the attempted URL for redirecting after login
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  return (
     <div>
       <div className="flex overflow-y-hidden bg-white font-inter">
         <Sidebar />
@@ -20,8 +28,6 @@ const PrivateRoute = ({ children }) => {
         {children}
       </div>{" "}
     </div>
-  ) : (
-    <Navigate to="/login" state={{ from: location }} replace />
   );
 };
 
@@ -30,12 +36,28 @@ function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/review"
           element={
             <PrivateRoute>
               <WellBeingReview />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/user-info"
+          element={
+            <PrivateRoute>
+              <UserInformation />
             </PrivateRoute>
           }
         />
