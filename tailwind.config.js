@@ -29,11 +29,21 @@ export default {
             opacity: '0',
             transform: 'translateY(-10px)'
           },
+        },
+        'slide-in': {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' }
+        },
+        'slide-out': {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(100%)' }
         }
       },
       animation: {
         'fade-in-down': 'fade-in-down 0.3s ease-out',
-        'fade-out-up': 'fade-out-up 0.3s ease-out'
+        'fade-out-up': 'fade-out-up 0.3s ease-out',
+        'slide-in': 'slide-in 0.3s ease-out',
+        'slide-out': 'slide-out 0.3s ease-in'
       },
       fontFamily: {
         'body': [

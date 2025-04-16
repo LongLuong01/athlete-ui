@@ -4,7 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider, AuthContext } from "../context/AuthContext";
 import Login from "../pages/Login";
-import WellBeingReview from "../components/WellBeingReview";
+import WellBeingReview from "../pages/WellBeingReview";
 import Dashboard from "../pages/Dashboard";
 import UserInformation from "../pages/UserInformation";
 import Sidebar from "../components/Sidebar";
