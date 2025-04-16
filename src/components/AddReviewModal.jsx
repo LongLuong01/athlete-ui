@@ -8,6 +8,7 @@ const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
     .reverse()
     .join("-");
   const [selectedDate, setSelectedDate] = useState(today);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [ratings, setRatings] = useState({
     muscle_soreness_point: "",
     sleep_hours: "",
@@ -67,8 +68,9 @@ const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
   };
 
   const handleSubmit = async () => {
-    // alert("Lưu đánh giá thành công!");
-    // onClose();
+    if (isSubmitting) return; // Prevent multiple submissions
+    
+    setIsSubmitting(true);
     const reviewData = {
       athlete_id: athleteId,
       training_date: selectedDate,
@@ -80,7 +82,7 @@ const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
       stress_level: ratings.stress_level,
       mental_state: ratings.mental_state,
     };
-    console.log(reviewData)
+    
     try {
       const response = await fetch(`${API_BASE_URL}/api/wellbeing`, {
         method: "POST",
@@ -99,6 +101,8 @@ const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
     } catch (error) {
       console.error("Lỗi API:", error);
       alert("Có lỗi xảy ra, vui lòng thử lại!");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -186,13 +190,28 @@ const AddReviewModal = ({ isOpen, onClose, setReviews, athleteId }) => {
         {/* Buttons */}
         <div className="flex justify-end gap-2 mt-4 ">
           <button
-            className="hover:cursor-pointer hover:bg-gray-300 px-4 py-2 bg-gray-200 rounded"
+            className="hover:cursor-pointer hover:bg-gray-300 px-4 py-2 bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onClose}
+            disabled={isSubmitting}
           >
             Hủy
           </button>
-          <button className="px-4 py-2 bg-blue-500 hover:cursor-pointer hover:bg-blue-600 text-white rounded" onClick={handleSubmit}>
-            Lưu
+          <button 
+            className="px-4 py-2 bg-blue-500 hover:cursor-pointer hover:bg-blue-600 text-white rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Đang lưu...
+              </>
+            ) : (
+              'Lưu'
+            )}
           </button>
         </div>
       </div>
