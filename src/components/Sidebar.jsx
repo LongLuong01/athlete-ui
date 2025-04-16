@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import API_BASE_URL from "../../config";
@@ -10,10 +10,26 @@ export default function Sidebar() {
   const athleteId = user.id;
   const [athlete, setAthlete] = useState();
   const [isOpen, setIsOpen] = useState(false);
+  const sidebarRef = useRef(null);
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
+
+  // Handle click outside to close sidebar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target) && 
+          !event.target.closest('button[aria-label="Toggle sidebar"]')) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Fetch review data của athlete
   const fetchAthlete = async () => {
@@ -35,8 +51,14 @@ export default function Sidebar() {
   }, []);
 
   const handleLogout = () => {
+    setIsOpen(false);
     logout();
     navigate('/login');
+  };
+
+  const handleNavigation = (path) => {
+    setIsOpen(false); // Đóng sidebar trước khi chuyển trang
+    navigate(path);
   };
 
   const isActivePath = (path) => {
@@ -49,6 +71,7 @@ export default function Sidebar() {
       <button
         onClick={toggleSidebar}
         type="button"
+        aria-label="Toggle sidebar"
         className="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
       >
         <span className="sr-only">Open sidebar</span>
@@ -68,7 +91,16 @@ export default function Sidebar() {
         </svg>
       </button>
 
+      {/* Overlay for mobile with backdrop blur */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 backdrop-blur-sm z-30 sm:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
       <aside
+        ref={sidebarRef}
         className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } sm:translate-x-0`}
@@ -78,7 +110,7 @@ export default function Sidebar() {
             {/* Dashboard */}
             <li>
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => handleNavigation('/dashboard')}
                 className={`flex items-center w-full p-2 text-gray-900 rounded-lg hover:bg-gray-100 group ${
                   isActivePath('/dashboard') ? 'bg-gray-200' : ''
                 }`}
@@ -100,7 +132,7 @@ export default function Sidebar() {
             {/* User Information */}
             <li>
               <button
-                onClick={() => navigate('/user-info')}
+                onClick={() => handleNavigation('/user-info')}
                 className={`flex items-center w-full p-2 text-gray-900 rounded-lg hover:bg-gray-100 group ${
                   isActivePath('/user-info') ? 'bg-gray-200' : ''
                 }`}
@@ -121,7 +153,7 @@ export default function Sidebar() {
             {/* Well-being review */}
             <li>
               <button
-                onClick={() => navigate('/review')}
+                onClick={() => handleNavigation('/review')}
                 className={`flex items-center w-full p-2 text-gray-900 rounded-lg hover:bg-gray-100 group ${
                   isActivePath('/review') ? 'bg-gray-200' : ''
                 }`}
