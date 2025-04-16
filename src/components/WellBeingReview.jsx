@@ -1,3 +1,4 @@
+import React from 'react';
 import AddReviewModal from "./AddReviewModal";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -15,7 +16,7 @@ export default function WellBeingReview() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const { toast, showToast, hideToast } = useToast();
-  const reviewsPerPage = 10;
+  const reviewsPerPage = 20;
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
 
@@ -64,35 +65,36 @@ export default function WellBeingReview() {
   const startItem = (currentPage - 1) * reviewsPerPage + 1;
   const endItem = Math.min(currentPage * reviewsPerPage, totalReviews);
 
-  // Hàm tạo danh sách số trang với `...` khi cần
+  // Updated pagination generation logic
   const generatePagination = () => {
+    const totalPages = Math.ceil(totalReviews / reviewsPerPage);
     let pages = [];
+
     if (totalPages <= 7) {
+      // If total pages is less than or equal to 7, show all pages
       pages = Array.from({ length: totalPages }, (_, i) => i + 1);
     } else {
+      // Always show first page
+      pages.push(1);
+
       if (currentPage <= 4) {
-        pages = [1, 2, 3, 4, "...", totalPages];
+        // If current page is among first 4 pages
+        pages.push(2, 3, 4, 5);
+        pages.push('...');
+        pages.push(totalPages);
       } else if (currentPage >= totalPages - 3) {
-        pages = [
-          1,
-          "...",
-          totalPages - 3,
-          totalPages - 2,
-          totalPages - 1,
-          totalPages,
-        ];
+        // If current page is among last 4 pages
+        pages.push('...');
+        pages.push(totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
       } else {
-        pages = [
-          1,
-          "...",
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
-          "...",
-          totalPages,
-        ];
+        // If current page is in the middle
+        pages.push('...');
+        pages.push(currentPage - 1, currentPage, currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
       }
     }
+
     return pages;
   };
 
@@ -260,69 +262,55 @@ export default function WellBeingReview() {
             )}
 
             {/* Pagination */}
-            <nav
-              className="flex flex-col md:flex-row justify-between items-center p-4"
-              aria-label="Table navigation"
-            >
-              <span className="text-sm font-normal text-gray-500">
-                Showing
-                <span className="font-semibold text-gray-900">
-                  {" "}
-                  {startItem}-{endItem}{" "}
-                </span>
-                of
-                <span className="font-semibold text-gray-900">
-                  {" "}
-                  {totalReviews}{" "}
-                </span>
-              </span>
+            <nav className="flex items-center space-x-1 py-4 px-4 justify-end">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`p-2 ${
+                  currentPage === 1 
+                  ? 'text-gray-300 cursor-not-allowed' 
+                  : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
 
-              <div className="flex items-center space-x-1">
-                {/* Nút Previous */}
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  className={`px-3 py-1 border rounded ${
-                    currentPage === 1
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-gray-200"
-                  }`}
-                  disabled={currentPage === 1}
-                >
-                  ‹
-                </button>
+              {generatePagination().map((page, index) => (
+                <React.Fragment key={index}>
+                  {page === '...' ? (
+                    <span className="px-3 py-2 text-sm text-gray-500">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 text-sm ${
+                        currentPage === page
+                          ? 'bg-blue-500 text-white rounded'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )}
+                </React.Fragment>
+              ))}
 
-                {/* Hiển thị danh sách số trang */}
-                {paginationNumbers.map((num, index) => (
-                  <button
-                    key={index}
-                    onClick={() => num !== "..." && setCurrentPage(num)}
-                    className={`px-3 py-1 border rounded ${
-                      currentPage === num
-                        ? "bg-blue-500 text-white"
-                        : "hover:bg-gray-200"
-                    }`}
-                  >
-                    {num}
-                  </button>
-                ))}
-
-                {/* Nút Next */}
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  className={`px-3 py-1 border rounded ${
-                    currentPage === totalPages
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-gray-200"
-                  }`}
-                  disabled={currentPage === totalPages}
-                >
-                  ›
-                </button>
-              </div>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalReviews / reviewsPerPage)))}
+                disabled={currentPage === Math.ceil(totalReviews / reviewsPerPage)}
+                className={`p-2 ${
+                  currentPage === Math.ceil(totalReviews / reviewsPerPage)
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
             </nav>
           </div>
         </div>
