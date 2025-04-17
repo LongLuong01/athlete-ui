@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, useRef } from "react";
+import { useContext, useEffect, useState, useRef, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import API_BASE_URL from "../../config";
@@ -7,62 +7,67 @@ export default function Sidebar() {
   const { user, logout, userInfo } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
   const sidebarRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [athlete, setAthlete] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
-
-  // Handle click outside to close sidebar
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target) && 
-          !event.target.closest('button[aria-label="Toggle sidebar"]')) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+  const toggleSidebar = useCallback(() => {
+    setIsOpen(prev => !prev);
   }, []);
 
-  // Fetch athlete data
-  useEffect(() => {
-    const fetchAthlete = async () => {
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/athletes/${userInfo?.athleteId}`
-        );
-        const data = await response.json();
-        setAthlete(data);
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
-      }
-    };
-
-    if (userInfo?.athleteId) {
-      fetchAthlete();
+  const handleClickOutside = useCallback((event) => {
+    if (sidebarRef.current && 
+        !sidebarRef.current.contains(event.target) && 
+        !event.target.closest('button[aria-label="Toggle sidebar"]')) {
+      setIsOpen(false);
     }
-  }, [userInfo]);
+  }, []);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [handleClickOutside]);
+
+  const fetchAthlete = useCallback(async (id) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/athletes/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch athlete data');
+      }
+      const data = await response.json();
+      setAthlete(data);
+    } catch (error) {
+      console.error("Error fetching athlete data:", error);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userInfo?.athleteId) {
+      fetchAthlete(userInfo.athleteId);
+    }
+  }, [userInfo?.athleteId, fetchAthlete]);
+
+  const handleLogout = useCallback(() => {
     setIsOpen(false);
     logout();
     navigate('/login');
-  };
+  }, [logout, navigate]);
 
-  const handleNavigation = (path) => {
-    setIsOpen(false); // Đóng sidebar trước khi chuyển trang
+  const handleNavigation = useCallback((path) => {
+    setIsOpen(false);
     navigate(path);
-  };
+  }, [navigate]);
 
-  const isActivePath = (path) => {
+  const isActivePath = useCallback((path) => {
     return location.pathname === path;
-  };
+  }, [location.pathname]);
 
   return (
     <>
@@ -84,7 +89,7 @@ export default function Sidebar() {
             clipRule="evenodd"
             fillRule="evenodd"
             d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-          ></path>
+          />
         </svg>
       </button>
 
@@ -173,9 +178,10 @@ export default function Sidebar() {
           <div className="border-t border-gray-200 p-4 mt-auto bg-gray-100">
             <div className="flex items-center space-x-4">
               <img
-                src={athlete?.avatar_url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(athlete?.username || "User")}
+                src={athlete?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(athlete?.username || "User")}&size=40`}
                 alt="User avatar"
                 className="w-10 h-10 rounded-full bg-gray-200"
+                loading="lazy"
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
