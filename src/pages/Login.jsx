@@ -11,11 +11,6 @@ const Login = () => {
   const { login } = useAuth();
   const location = useLocation();
 
-  // Nếu có route bị chặn, redirect về đó, nếu không có thì về "/"
-  const from =
-    location.state?.from?.pathname + location.state?.from?.search || "/review";
-  
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -24,7 +19,9 @@ const Login = () => {
     try {
       const data = await authApi.login({ email, password });
       if (data.token) {
-        await login(data);
+        // Get the redirect path from location state
+        const from = location.state?.from?.pathname + location.state?.from?.search || "/review";
+        await login({ token: data.token, user: data.user }, from);
       } else {
         setError(data.message || "Đăng nhập thất bại. Vui lòng thử lại.");
       }

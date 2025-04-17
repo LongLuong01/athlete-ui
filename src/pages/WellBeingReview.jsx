@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSearchParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AddReviewModal from "../components/AddReviewModal";
 import Toast from "../components/Toast";
@@ -15,7 +15,7 @@ import { REVIEW_MAPPINGS } from '../constants/reviewMappings';
 
 export default function WellBeingReview() {
   const { user } = useAuth();
-  const athleteId = user.id;
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const { toast, showToast, hideToast } = useToast();
@@ -24,6 +24,24 @@ export default function WellBeingReview() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!user) {
+      const currentUrl = window.location.pathname + window.location.search;
+      navigate(`/login?returnUrl=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
+    // Check for openModal parameter only if user is authenticated
+    const shouldOpenModal = searchParams.get('openModal') === 'true';
+    if (shouldOpenModal) {
+      console.log('Opening modal from URL parameter');
+      setIsReviewModalOpen(true);
+      // Remove the parameter from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [user, searchParams]);
 
   const reviewsPerPage = 30;
   const totalPages = Math.ceil(totalReviews / reviewsPerPage);
@@ -34,7 +52,7 @@ export default function WellBeingReview() {
       setError(null);
       const token = localStorage.getItem('token');
       const data = await wellbeingApi.getAthleteReviews(
-        athleteId,
+        user?.id,
         currentPage,
         reviewsPerPage,
         token
@@ -49,11 +67,11 @@ export default function WellBeingReview() {
     }
   };
 
-  React.useEffect(() => {
-    if (athleteId) {
+  useEffect(() => {
+    if (user?.id) {
       fetchReviews();
     }
-  }, [athleteId, currentPage]);
+  }, [user, currentPage]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

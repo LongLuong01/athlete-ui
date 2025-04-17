@@ -16,7 +16,7 @@ const PrivateRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     // Save the attempted URL for redirecting after login
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return (
